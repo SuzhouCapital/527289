@@ -1,0 +1,61 @@
+{
+  "@context": {
+    "@language": "en-us",
+    "CIP100": "https://github.com/cardano-foundation/CIPs/blob/master/CIP-0100/README.md#",
+    "CIP119": "https://github.com/cardano-foundation/CIPs/blob/master/CIP-0119/README.md#",
+    "hashAlgorithm": "CIP100:hashAlgorithm",
+    "body": {
+      "@id": "CIP119:body",
+      "@context": {
+        "references": {
+          "@id": "CIP119:references",
+          "@container": "@set",
+          "@context": {
+            "GovernanceMetadata": "CIP100:GovernanceMetadataReference",
+            "Identity": "CIP119:IdentityReference",
+            "Link": "CIP119:LinkReference",
+            "Other": "CIP100:OtherReference",
+            "label": "CIP100:reference-label",
+            "uri": "CIP100:reference-uri",
+            "referenceHash": {
+              "@id": "CIP119:referenceHash",
+              "@context": {
+                "hashDigest": "CIP119:hashDigest",
+                "hashAlgorithm": "CIP100:hashAlgorithm"
+              }
+            }
+          }
+        },
+        "paymentAddress": "CIP119:paymentAddress",
+        "givenName": "CIP119:givenName",
+        "image": "CIP119:image",
+        "objectives": "CIP119:objectives",
+        "motivations": "CIP119:motivations",
+        "qualifications": "CIP119:qualifications",
+        "doNotList": "CIP119:doNotList"
+      }
+    },
+    "authors": {
+      "@id": "CIP100:authors",
+      "@container": "@set",
+      "@context": {
+        "name": "http://xmlns.com/foaf/0.1/name",
+        "witness": {
+          "@id": "CIP100:witness",
+          "@context": {
+            "witnessAlgorithm": "CIP100:witnessAlgorithm",
+            "publicKey": "CIP100:publicKey",
+            "signature": "CIP100:signature"
+          }
+        }
+      }
+    }
+  },
+  "hashAlgorithm": "blake2b-256",
+  "body": {
+    "givenName": "Suzhou Capital",
+    "motivations": "Non-technical former blockchain ignorant normie with a desire to help other people come along the journey to understand and use Web 3.\n\nI want to share the perception from outside of the echo-chamber. Listen and react to the world outside Web 3. Compete and challenge the developments that are pushing boundaries within the Web 3 Space.\n\nGrow the Cardano brand into a household name.",
+    "objectives": "Cardano is the future powerhouse of the blockchain world.\n\nInteroperability is key - Midnight & Partnerchains need to be prioritised to enable collaborations with the Bitcoin Ecosystem and others.\n\nProtect the community - Stop needless politics, it is Cardano against the world's outdated systems not Cardano vs Cardano. \n\nA balanced approach to research and development - Maintain the security of Cardano through thorough research-proven development whilst also reacting to the needs of the Cardano Ecosystem and the wider Web 3 & Web 2 world.\n\nWiden the community - REACH into the normie world. Help people engage and understand in blockchain in general, Cardano will benefit as a result.",
+    "qualifications": "4 years working closely with the Chinese blockchain community. Ada Investor and FinTech Operations Director."
+  }
+}
