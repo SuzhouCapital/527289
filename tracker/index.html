@@ -1,0 +1,764 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Weekly Project Tracker</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700&family=Public+Sans:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap">
+<style>
+/* Layout: sticky week bar, summary strip, then a five-stage workflow board (or a Mon–Sun planner) with a weekly review drawer below. */
+:root {
+  --bg: #EEF1F4; --surface: #FFFFFF; --sunk: #E3E8EE; --ink: #16202C; --muted: #5A6676; --line: #D2D9E2;
+  --accent: #2445C9; --accent-ink: #FFFFFF; --accent-soft: #E1E7FB; --today: #B77A0C; --today-soft: #FBF0D9;
+  --good: #1D7F55; --warn: #A86A12; --bad: #BE3A2F;
+  --s-backlog: #8A95A5; --s-todo: #3C4A5E; --s-doing: #2445C9; --s-review: #A86A12; --s-done: #1D7F55;
+  --p1: #2445C9; --p2: #0E7C7B; --p3: #B4441C; --p4: #7A3EA8; --p5: #A07400; --p6: #C02A6B;
+  --shadow: 0 1px 2px rgba(22,32,44,.06), 0 4px 14px rgba(22,32,44,.06);
+  --f-display: "Bricolage Grotesque", "Avenir Next", "Segoe UI", system-ui, sans-serif;
+  --f-body: "Public Sans", "Helvetica Neue", "Segoe UI", system-ui, sans-serif;
+  --f-mono: "JetBrains Mono", ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+  --r: 8px;
+  color-scheme: light;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #0E131A; --surface: #161D27; --sunk: #0A0F15; --ink: #E5EAF1; --muted: #93A0B2; --line: #263140;
+    --accent: #8098FF; --accent-ink: #0E131A; --accent-soft: #1C2747; --today: #E6B04A; --today-soft: #2E2615;
+    --good: #4CC38A; --warn: #E3B341; --bad: #F0796E;
+    --s-backlog: #6D7889; --s-todo: #B4BFCE; --s-doing: #8098FF; --s-review: #E3B341; --s-done: #4CC38A;
+    --p1: #8098FF; --p2: #3FC1BF; --p3: #F08A5D; --p4: #B98AE6; --p5: #E0B33C; --p6: #F07AAE;
+    --shadow: 0 1px 2px rgba(0,0,0,.4), 0 4px 14px rgba(0,0,0,.25);
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #0E131A; --surface: #161D27; --sunk: #0A0F15; --ink: #E5EAF1; --muted: #93A0B2; --line: #263140;
+  --accent: #8098FF; --accent-ink: #0E131A; --accent-soft: #1C2747; --today: #E6B04A; --today-soft: #2E2615;
+  --good: #4CC38A; --warn: #E3B341; --bad: #F0796E;
+  --s-backlog: #6D7889; --s-todo: #B4BFCE; --s-doing: #8098FF; --s-review: #E3B341; --s-done: #4CC38A;
+  --p1: #8098FF; --p2: #3FC1BF; --p3: #F08A5D; --p4: #B98AE6; --p5: #E0B33C; --p6: #F07AAE;
+  --shadow: 0 1px 2px rgba(0,0,0,.4), 0 4px 14px rgba(0,0,0,.25);
+  color-scheme: dark;
+}
+* { box-sizing: border-box; }
+html, body { margin: 0; }
+body { background: var(--bg); color: var(--ink); font: 14px/1.5 var(--f-body); -webkit-font-smoothing: antialiased; }
+[hidden] { display: none !important; }
+button, input, select, textarea { font: inherit; color: inherit; }
+:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.wrap { max-width: 1320px; margin: 0 auto; padding-inline: 16px; padding-block: 0 48px; }
+@media (min-width: 720px) { .wrap { padding-inline: 28px; } }
+
+/* Week bar */
+.weekbar { position: sticky; top: env(safe-area-inset-top, 0px); z-index: 20; background: var(--bg); border-bottom: 1px solid var(--line); }
+@media (max-width: 719px) { .weekbar { position: static; } }
+.weekbar .wrap { padding-block: 14px; display: flex; flex-wrap: wrap; align-items: center; gap: 12px 20px; }
+.brand { display: flex; flex-direction: column; min-width: 0; margin-right: auto; }
+.eyebrow { font: 500 11px/1.2 var(--f-mono); letter-spacing: .08em; text-transform: uppercase; color: var(--muted); }
+h1 { font: 700 clamp(22px, 3.2vw, 30px)/1.1 var(--f-display); margin: 2px 0 0; letter-spacing: -.01em; text-wrap: balance; }
+h1 .wk { color: var(--accent); }
+.nav { display: flex; gap: 6px; align-items: center; flex-wrap: wrap; }
+.btn { border: 1px solid var(--line); background: var(--surface); border-radius: var(--r); padding: 7px 12px; cursor: pointer; font-weight: 500; line-height: 1.2; display: inline-flex; gap: 6px; align-items: center; }
+.btn:hover { border-color: var(--muted); }
+.btn.primary { background: var(--accent); color: var(--accent-ink); border-color: var(--accent); }
+.btn.primary:hover { filter: brightness(1.08); }
+.btn.ghost { background: transparent; border-color: transparent; color: var(--muted); }
+.btn.ghost:hover { color: var(--ink); border-color: var(--line); }
+.btn.icon { padding: 7px 10px; font-family: var(--f-mono); }
+.btn.danger { color: var(--bad); }
+.seg { display: inline-flex; border: 1px solid var(--line); border-radius: var(--r); overflow: hidden; background: var(--surface); }
+.seg button { border: 0; background: transparent; padding: 7px 12px; cursor: pointer; font-weight: 500; color: var(--muted); }
+.seg button[aria-pressed="true"] { background: var(--ink); color: var(--bg); }
+
+/* Summary */
+.summary { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 12px; margin-top: 20px; }
+.panel { background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 14px 16px; min-width: 0; }
+.panel h2 { font: 500 11px/1.2 var(--f-mono); letter-spacing: .08em; text-transform: uppercase; color: var(--muted); margin: 0 0 10px; }
+.big { font: 700 32px/1 var(--f-display); font-variant-numeric: tabular-nums; }
+.big small { font: 500 13px var(--f-body); color: var(--muted); margin-left: 6px; }
+.meter { height: 8px; border-radius: 4px; background: var(--sunk); overflow: hidden; display: flex; margin-top: 12px; }
+.meter span { display: block; height: 100%; transition: width .3s ease; }
+.legend { display: flex; flex-wrap: wrap; gap: 4px 12px; margin-top: 10px; font-size: 12px; color: var(--muted); }
+.legend i { display: inline-block; width: 8px; height: 8px; border-radius: 2px; margin-right: 5px; vertical-align: 0; }
+.legend b { color: var(--ink); font-weight: 600; font-variant-numeric: tabular-nums; }
+.projrows { display: grid; gap: 8px; }
+.projrow { display: grid; grid-template-columns: minmax(0, 1fr) 46px; gap: 4px 10px; align-items: center; font-size: 13px; }
+.projrow .name { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.projrow .pct { text-align: right; font: 500 12px var(--f-mono); color: var(--muted); font-variant-numeric: tabular-nums; }
+.projrow .bar { grid-column: 1 / -1; height: 4px; background: var(--sunk); border-radius: 2px; overflow: hidden; }
+.projrow .bar span { display: block; height: 100%; }
+.flags { display: grid; gap: 8px; font-size: 13px; }
+.flag { display: flex; justify-content: space-between; gap: 8px; }
+.flag b { font: 600 13px var(--f-mono); font-variant-numeric: tabular-nums; }
+.flag.alert b { color: var(--bad); }
+.flag.warn b { color: var(--warn); }
+
+/* Toolbar */
+.toolbar { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; margin: 22px 0 12px; }
+.chips { display: flex; flex-wrap: wrap; gap: 6px; flex: 1 1 320px; min-width: 0; }
+.chip { border: 1px solid var(--line); background: var(--surface); border-radius: 999px; padding: 4px 11px 4px 9px; font-size: 13px; cursor: pointer; display: inline-flex; align-items: center; gap: 6px; }
+.chip .dot { width: 8px; height: 8px; border-radius: 50%; background: var(--c, var(--muted)); }
+.chip[aria-pressed="true"] { border-color: var(--ink); background: var(--ink); color: var(--bg); }
+.chip.add { border-style: dashed; color: var(--muted); }
+.search { border: 1px solid var(--line); background: var(--surface); border-radius: var(--r); padding: 7px 10px; width: 200px; max-width: 100%; }
+
+/* Board */
+.board-scroll { overflow-x: auto; padding-bottom: 6px; }
+.board { display: grid; grid-template-columns: repeat(var(--cols, 5), minmax(230px, 1fr)); gap: 12px; align-items: start; }
+.col { background: var(--sunk); border-radius: 10px; padding: 10px; min-height: 160px; display: flex; flex-direction: column; gap: 8px; border: 1px solid transparent; transition: border-color .15s, background .15s; }
+.col.over { border-color: var(--accent); background: var(--accent-soft); }
+.col.today { background: var(--today-soft); }
+.col-head { display: flex; align-items: center; gap: 8px; padding: 2px 4px 4px; }
+.col-head .sw { width: 10px; height: 10px; border-radius: 3px; background: var(--sc); flex: none; }
+.col-head h3 { font: 600 13px var(--f-body); margin: 0; }
+.col-head .n { margin-left: auto; font: 500 12px var(--f-mono); color: var(--muted); font-variant-numeric: tabular-nums; }
+.col-head .tag { font: 500 10px var(--f-mono); letter-spacing: .06em; text-transform: uppercase; color: var(--today); }
+.col-add { border: 1px dashed var(--line); background: transparent; border-radius: var(--r); padding: 7px; color: var(--muted); cursor: pointer; text-align: left; font-size: 13px; }
+.col-add:hover { color: var(--ink); border-color: var(--muted); }
+.empty-col { font-size: 12px; color: var(--muted); padding: 10px 4px; }
+
+.card { background: var(--surface); border: 1px solid var(--line); border-radius: var(--r); padding: 10px 11px 9px; box-shadow: var(--shadow); cursor: grab; display: grid; gap: 7px; position: relative; }
+.card:hover { border-color: var(--muted); }
+.card.dragging { opacity: .45; }
+.card.done .title { color: var(--muted); text-decoration: line-through; text-decoration-color: var(--line); }
+.card .top { display: flex; align-items: center; gap: 6px; font-size: 11px; color: var(--muted); }
+.card .proj { display: inline-flex; align-items: center; gap: 5px; min-width: 0; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
+.card .proj::before { content: ""; width: 7px; height: 7px; border-radius: 50%; background: var(--c); flex: none; }
+.prio { margin-left: auto; font: 600 10px var(--f-mono); letter-spacing: .05em; padding: 1px 6px; border-radius: 4px; border: 1px solid currentColor; flex: none; }
+.prio.high { color: var(--bad); } .prio.med { color: var(--warn); } .prio.low { color: var(--muted); }
+.card .title { font-weight: 600; font-size: 14px; line-height: 1.35; overflow-wrap: anywhere; }
+.card .meta { display: flex; align-items: center; gap: 8px; font: 500 11px var(--f-mono); color: var(--muted); flex-wrap: wrap; }
+.card .meta .due.late { color: var(--bad); }
+.card .meta .due.now { color: var(--today); }
+.card .meta .carried { color: var(--warn); }
+.avatar { margin-left: auto; width: 22px; height: 22px; border-radius: 50%; background: var(--sunk); color: var(--ink); display: inline-grid; place-items: center; font: 600 10px var(--f-body); border: 1px solid var(--line); }
+.movers { display: flex; gap: 4px; }
+.movers button { border: 1px solid var(--line); background: transparent; border-radius: 5px; width: 24px; height: 22px; padding: 0; cursor: pointer; font: 500 12px var(--f-mono); color: var(--muted); }
+.movers button:hover:not(:disabled) { color: var(--ink); border-color: var(--muted); }
+.movers button:disabled { opacity: .3; cursor: default; }
+
+/* Review */
+.review { margin-top: 26px; display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 12px; }
+.review-head { display: flex; flex-wrap: wrap; align-items: baseline; gap: 8px 16px; margin-top: 30px; }
+.review-head h2 { font: 700 20px/1.2 var(--f-display); margin: 0; }
+.review-head p { margin: 0; color: var(--muted); font-size: 13px; flex: 1 1 260px; }
+.review label { display: block; font: 500 11px/1.2 var(--f-mono); letter-spacing: .08em; text-transform: uppercase; color: var(--muted); margin-bottom: 8px; }
+.review textarea { width: 100%; min-height: 110px; resize: vertical; border: 1px solid var(--line); border-radius: var(--r); background: var(--bg); padding: 9px 10px; line-height: 1.5; }
+.saved { font: 500 11px var(--f-mono); color: var(--good); opacity: 0; transition: opacity .3s; }
+.saved.on { opacity: 1; }
+
+.foot { margin-top: 30px; display: flex; flex-wrap: wrap; gap: 8px; align-items: center; color: var(--muted); font-size: 12px; }
+.foot .sp { flex: 1; }
+.banner { margin-top: 16px; display: flex; flex-wrap: wrap; gap: 8px 14px; align-items: center; background: var(--accent-soft); border: 1px solid var(--line); border-radius: 10px; padding: 10px 14px; font-size: 13px; }
+.banner p { margin: 0; flex: 1 1 260px; }
+
+/* Dialog */
+dialog { border: 1px solid var(--line); border-radius: 12px; background: var(--surface); color: var(--ink); padding: 0; width: min(560px, calc(100vw - 32px)); box-shadow: 0 20px 60px rgba(0,0,0,.25); }
+dialog::backdrop { background: rgba(10,15,21,.45); }
+.dlg { padding: 20px; display: grid; gap: 14px; }
+.dlg h2 { font: 700 20px/1.2 var(--f-display); margin: 0; }
+.field { display: grid; gap: 5px; min-width: 0; }
+.field > span { font: 500 11px/1.2 var(--f-mono); letter-spacing: .08em; text-transform: uppercase; color: var(--muted); }
+.field input, .field select, .field textarea { border: 1px solid var(--line); border-radius: var(--r); background: var(--bg); padding: 8px 10px; width: 100%; min-width: 0; }
+.field textarea { min-height: 80px; resize: vertical; }
+.grid2 { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 12px; }
+.dlg-actions { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+.dlg-actions .sp { flex: 1; }
+.swatches { display: flex; gap: 8px; flex-wrap: wrap; }
+.swatches label { cursor: pointer; }
+.swatches input { position: absolute; opacity: 0; pointer-events: none; }
+.swatches span { display: block; width: 26px; height: 26px; border-radius: 50%; background: var(--c); border: 2px solid transparent; box-shadow: inset 0 0 0 2px var(--surface); }
+.swatches input:checked + span { border-color: var(--ink); }
+.swatches input:focus-visible + span { outline: 2px solid var(--accent); outline-offset: 2px; }
+.mono { font-family: var(--f-mono); font-size: 12px; }
+.hint { color: var(--muted); font-size: 12px; margin: 0; }
+.confirm { background: var(--sunk); border-radius: var(--r); padding: 10px 12px; display: flex; flex-wrap: wrap; gap: 8px; align-items: center; font-size: 13px; }
+.confirm p { margin: 0; flex: 1 1 200px; }
+
+.toast { position: fixed; left: 50%; bottom: calc(20px + env(safe-area-inset-bottom, 0px)); transform: translate(-50%, 20px); background: var(--ink); color: var(--bg); padding: 9px 16px; border-radius: 999px; font-size: 13px; font-weight: 500; opacity: 0; pointer-events: none; transition: opacity .2s, transform .2s; z-index: 50; max-width: calc(100vw - 32px); }
+.toast.on { opacity: 1; transform: translate(-50%, 0); }
+
+@media (prefers-reduced-motion: reduce) { *, *::before, *::after { transition: none !important; animation: none !important; } }
+</style>
+</head>
+<body>
+
+<header class="weekbar">
+  <div class="wrap">
+    <div class="brand">
+      <span class="eyebrow" id="range">—</span>
+      <h1>Weekly Project Tracker · <span class="wk" id="wklabel">W00</span></h1>
+    </div>
+    <div class="nav">
+      <button class="btn icon" id="prev" aria-label="Previous week" title="Previous week">←</button>
+      <button class="btn" id="thisweek">This week</button>
+      <button class="btn icon" id="next" aria-label="Next week" title="Next week">→</button>
+    </div>
+    <div class="seg" role="group" aria-label="View">
+      <button id="v-board" aria-pressed="true">Workflow</button>
+      <button id="v-week" aria-pressed="false">Mon–Sun</button>
+    </div>
+    <button class="btn primary" id="newtask">+ New task</button>
+  </div>
+</header>
+
+<main class="wrap">
+  <div class="banner" id="examples" hidden>
+    <p><strong>These are example projects and tasks</strong> so you can see how the tracker works. Edit them or clear them and start fresh.</p>
+    <button class="btn" id="clearex">Clear examples</button>
+  </div>
+
+  <section class="summary" aria-label="Week summary">
+    <div class="panel">
+      <h2>Progress this week</h2>
+      <div class="big" id="pct">0%<small></small></div>
+      <div class="meter" id="stagebar"></div>
+      <div class="legend" id="stagelegend"></div>
+    </div>
+    <div class="panel">
+      <h2>By project</h2>
+      <div class="projrows" id="projrows"></div>
+    </div>
+    <div class="panel">
+      <h2>Needs attention</h2>
+      <div class="flags" id="flags"></div>
+    </div>
+  </section>
+
+  <div class="toolbar">
+    <div class="chips" id="chips" role="group" aria-label="Filter by project"></div>
+    <input class="search" id="search" type="search" placeholder="Search tasks or owners" aria-label="Search tasks">
+  </div>
+
+  <div class="board-scroll"><div class="board" id="board"></div></div>
+
+  <div class="review-head">
+    <h2>Weekly review</h2>
+    <p>Notes are saved per week as you type. Use “Roll over” on Friday to move anything unfinished into next week.</p>
+    <span class="saved" id="saved">Saved</span>
+    <button class="btn" id="rollover">Roll over unfinished →</button>
+  </div>
+  <section class="review">
+    <div class="panel"><label for="r-wins">Wins</label><textarea id="r-wins" placeholder="What shipped or moved forward?"></textarea></div>
+    <div class="panel"><label for="r-blockers">Blockers</label><textarea id="r-blockers" placeholder="What's stuck, and who can unblock it?"></textarea></div>
+    <div class="panel"><label for="r-focus">Next week's focus</label><textarea id="r-focus" placeholder="Top three priorities for next week"></textarea></div>
+  </section>
+
+  <div class="foot">
+    <span>Saved in this browser only.</span>
+    <span class="sp"></span>
+    <button class="btn ghost" id="exportbtn">Back up / restore data</button>
+  </div>
+</main>
+
+<!-- Task dialog -->
+<dialog id="taskdlg">
+  <form class="dlg" id="taskform" method="dialog">
+    <h2 id="taskdlg-title">New task</h2>
+    <label class="field"><span>Task</span><input id="t-title" required maxlength="140" placeholder="e.g. Draft Q4 roadmap"></label>
+    <div class="grid2">
+      <label class="field"><span>Project</span><select id="t-project"></select></label>
+      <label class="field"><span>Stage</span><select id="t-stage"></select></label>
+      <label class="field"><span>Priority</span><select id="t-prio"><option value="high">High</option><option value="med">Medium</option><option value="low">Low</option></select></label>
+      <label class="field"><span>Due day</span><select id="t-day"></select></label>
+      <label class="field"><span>Owner</span><input id="t-owner" maxlength="40" placeholder="Name"></label>
+      <label class="field"><span>Effort (points)</span><input id="t-points" type="number" min="0" max="40" step="1" value="1"></label>
+    </div>
+    <label class="field"><span>Notes</span><textarea id="t-notes" placeholder="Links, acceptance criteria, context"></textarea></label>
+    <div class="confirm" id="t-confirm" hidden><p>Delete this task? This can't be undone.</p><button type="button" class="btn danger" id="t-del-yes">Delete</button><button type="button" class="btn" id="t-del-no">Keep</button></div>
+    <div class="dlg-actions">
+      <button type="button" class="btn ghost danger" id="t-delete">Delete</button>
+      <span class="sp"></span>
+      <button type="button" class="btn" id="t-cancel">Cancel</button>
+      <button type="submit" class="btn primary" id="t-save">Save task</button>
+    </div>
+  </form>
+</dialog>
+
+<!-- Project dialog -->
+<dialog id="projdlg">
+  <form class="dlg" id="projform" method="dialog">
+    <h2 id="projdlg-title">New project</h2>
+    <label class="field"><span>Name</span><input id="p-name" required maxlength="40" placeholder="e.g. Website relaunch"></label>
+    <div class="field"><span>Colour</span><div class="swatches" id="p-colors"></div></div>
+    <div class="confirm" id="p-confirm" hidden><p id="p-confirm-text">Delete this project and its tasks?</p><button type="button" class="btn danger" id="p-del-yes">Delete</button><button type="button" class="btn" id="p-del-no">Keep</button></div>
+    <div class="dlg-actions">
+      <button type="button" class="btn ghost danger" id="p-delete">Delete</button>
+      <span class="sp"></span>
+      <button type="button" class="btn" id="p-cancel">Cancel</button>
+      <button type="submit" class="btn primary">Save project</button>
+    </div>
+  </form>
+</dialog>
+
+<!-- Data dialog -->
+<dialog id="datadlg">
+  <div class="dlg">
+    <h2>Back up / restore</h2>
+    <p class="hint">Copy this JSON somewhere safe, or paste a backup below and restore it. Restoring replaces everything in this browser.</p>
+    <label class="field"><span>Data</span><textarea id="d-json" class="mono" rows="10" spellcheck="false"></textarea></label>
+    <p class="hint" id="d-msg"></p>
+    <div class="dlg-actions">
+      <button type="button" class="btn" id="d-copy">Copy JSON</button>
+      <label class="btn" for="d-file">Load file…</label>
+      <input type="file" id="d-file" accept="application/json,.json" hidden>
+      <span class="sp"></span>
+      <button type="button" class="btn" id="d-close">Close</button>
+      <button type="button" class="btn primary" id="d-restore">Restore</button>
+    </div>
+  </div>
+</dialog>
+
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+<script>
+(() => {
+  const KEY = 'weekly-project-tracker:v1';
+  const STAGES = [
+    { id: 'backlog', name: 'Backlog' },
+    { id: 'todo', name: 'To do' },
+    { id: 'doing', name: 'In progress' },
+    { id: 'review', name: 'Review' },
+    { id: 'done', name: 'Done' }
+  ];
+  const DAYS = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+  const COLORS = ['p1', 'p2', 'p3', 'p4', 'p5', 'p6'];
+  const PRIO = { high: 'HIGH', med: 'MED', low: 'LOW' };
+  const $ = (id) => document.getElementById(id);
+  const esc = (s) => String(s ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+  const uid = () => Math.random().toString(36).slice(2, 10);
+
+  // ---- Dates & ISO weeks ----
+  const startOfDay = (d) => new Date(d.getFullYear(), d.getMonth(), d.getDate());
+  const mondayOf = (d) => { const x = startOfDay(d); x.setDate(x.getDate() - ((x.getDay() + 6) % 7)); return x; };
+  const addDays = (d, n) => { const x = new Date(d); x.setDate(x.getDate() + n); return x; };
+  function isoWeek(d) {
+    const t = new Date(Date.UTC(d.getFullYear(), d.getMonth(), d.getDate()));
+    const day = t.getUTCDay() || 7;
+    t.setUTCDate(t.getUTCDate() + 4 - day);
+    const y = t.getUTCFullYear();
+    const w = Math.ceil(((t - Date.UTC(y, 0, 1)) / 864e5 + 1) / 7);
+    return { y, w };
+  }
+  const weekKey = (monday) => { const { y, w } = isoWeek(monday); return `${y}-W${String(w).padStart(2, '0')}`; };
+  const fmt = (d, o) => d.toLocaleDateString(undefined, o);
+
+  // ---- State ----
+  let viewMonday = mondayOf(new Date());
+  let view = 'board';
+  let filterProject = null;
+  let query = '';
+  let editingId = null;
+  let editingProjectId = null;
+  let state = load() || seed();
+
+  function load() {
+    try {
+      const raw = localStorage.getItem(KEY);
+      if (!raw) return null;
+      const s = JSON.parse(raw);
+      return valid(s) ? s : null;
+    } catch { return null; }
+  }
+  function save() { try { localStorage.setItem(KEY, JSON.stringify(state)); } catch {} }
+  function valid(s) { return s && Array.isArray(s.projects) && Array.isArray(s.tasks) && typeof s.reviews === 'object'; }
+
+  function seed() {
+    const thisWk = weekKey(mondayOf(new Date()));
+    const lastWk = weekKey(addDays(mondayOf(new Date()), -7));
+    const P = [
+      { id: 'web', name: 'Website relaunch', color: 'p1' },
+      { id: 'app', name: 'Mobile app v2.3', color: 'p2' },
+      { id: 'ops', name: 'Hiring & ops', color: 'p3' },
+      { id: 'mkt', name: 'Q4 campaign', color: 'p4' }
+    ];
+    const T = (title, projectId, stage, priority, owner, day, points, week = thisWk, extra = {}) =>
+      ({ id: uid(), title, projectId, stage, priority, owner, day, points, week, notes: '', ...extra });
+    return {
+      example: true,
+      projects: P,
+      tasks: [
+        T('Finalise homepage hero copy', 'web', 'review', 'high', 'Maya Chen', 1, 2),
+        T('Migrate blog posts to new CMS', 'web', 'doing', 'med', 'Leo Park', 3, 5),
+        T('Set up 301 redirects for old URLs', 'web', 'todo', 'high', 'Leo Park', 4, 2),
+        T('Accessibility audit (WCAG 2.2 AA)', 'web', 'backlog', 'med', '', null, 3),
+        T('Fix push-notification opt-in crash', 'app', 'done', 'high', 'Sam Okafor', 0, 3),
+        T('Offline mode for saved lists', 'app', 'doing', 'med', 'Sam Okafor', 4, 8, thisWk, { carried: 1 }),
+        T('Submit build to App Store review', 'app', 'todo', 'high', 'Priya Nair', 3, 1),
+        T('Screen interviews: senior designer', 'ops', 'done', 'med', 'Maya Chen', 1, 2),
+        T('Write onboarding checklist', 'ops', 'todo', 'low', 'Priya Nair', 2, 1),
+        T('Brief agency on launch video', 'mkt', 'done', 'med', 'Ana Ruiz', 0, 1),
+        T('Approve paid social budget', 'mkt', 'review', 'high', 'Ana Ruiz', 2, 1),
+        T('Draft launch email sequence', 'mkt', 'backlog', 'low', 'Ana Ruiz', null, 3),
+        T('Kick-off with design partner', 'web', 'done', 'med', 'Maya Chen', 0, 1, lastWk),
+        T('Crash analytics dashboard', 'app', 'done', 'med', 'Sam Okafor', 2, 3, lastWk),
+        T('Update careers page', 'ops', 'done', 'low', 'Priya Nair', 4, 1, lastWk)
+      ],
+      reviews: {
+        [lastWk]: { wins: 'Design partner kicked off. Crash dashboard live.', blockers: 'Offline mode needs API changes from backend.', focus: 'Ship App Store build, homepage copy sign-off.' }
+      }
+    };
+  }
+
+  // ---- Derived ----
+  const curKey = () => weekKey(viewMonday);
+  const project = (id) => state.projects.find((p) => p.id === id);
+  const todayIdx = () => {
+    const t = startOfDay(new Date());
+    const diff = Math.round((t - viewMonday) / 864e5);
+    return diff >= 0 && diff < 7 ? diff : null;
+  };
+  const isPastWeek = () => addDays(viewMonday, 7) <= startOfDay(new Date());
+  function weekTasks() { return state.tasks.filter((t) => t.week === curKey()); }
+  function visibleTasks() {
+    const q = query.trim().toLowerCase();
+    return weekTasks().filter((t) =>
+      (!filterProject || t.projectId === filterProject) &&
+      (!q || t.title.toLowerCase().includes(q) || (t.owner || '').toLowerCase().includes(q) || (t.notes || '').toLowerCase().includes(q)));
+  }
+  function isLate(t) {
+    if (t.stage === 'done' || t.day == null) return false;
+    if (isPastWeek()) return true;
+    const ti = todayIdx();
+    return ti != null && t.day < ti;
+  }
+  const initials = (n) => (n || '').trim().split(/\s+/).filter(Boolean).slice(0, 2).map((w) => w[0].toUpperCase()).join('') || '–';
+  const pts = (t) => Number(t.points) || 0;
+
+  // ---- Render ----
+  function render() {
+    const sun = addDays(viewMonday, 6);
+    const { w, y } = isoWeek(viewMonday);
+    $('wklabel').textContent = `W${String(w).padStart(2, '0')}`;
+    const rangeTxt = `${fmt(viewMonday, { day: 'numeric', month: 'short' })} – ${fmt(sun, { day: 'numeric', month: 'short' })} ${sun.getFullYear()}`;
+    const rel = todayIdx() != null ? ' · this week' : isPastWeek() ? ' · past week' : ' · upcoming';
+    $('range').textContent = `ISO ${y} · ${rangeTxt}${rel}`;
+    $('v-board').setAttribute('aria-pressed', view === 'board');
+    $('v-week').setAttribute('aria-pressed', view === 'week');
+    $('examples').hidden = !state.example;
+    renderSummary();
+    renderChips();
+    renderBoard();
+    renderReview();
+  }
+
+  function renderSummary() {
+    const ts = weekTasks();
+    const total = ts.reduce((a, t) => a + pts(t), 0);
+    const done = ts.filter((t) => t.stage === 'done').reduce((a, t) => a + pts(t), 0);
+    const pct = total ? Math.round((done / total) * 100) : 0;
+    $('pct').innerHTML = `${pct}%<small>${done} of ${total} pts done</small>`;
+    $('stagebar').innerHTML = STAGES.map((s) => {
+      const v = ts.filter((t) => t.stage === s.id).reduce((a, t) => a + pts(t), 0);
+      return total ? `<span style="width:${(v / total) * 100}%;background:var(--s-${s.id})" title="${s.name}: ${v} pts"></span>` : '';
+    }).join('');
+    $('stagelegend').innerHTML = STAGES.map((s) => `<span><i style="background:var(--s-${s.id})"></i>${s.name} <b>${ts.filter((t) => t.stage === s.id).length}</b></span>`).join('');
+
+    const rows = state.projects.map((p) => {
+      const pt = ts.filter((t) => t.projectId === p.id);
+      if (!pt.length) return '';
+      const tot = pt.reduce((a, t) => a + pts(t), 0);
+      const dn = pt.filter((t) => t.stage === 'done').reduce((a, t) => a + pts(t), 0);
+      const pc = tot ? Math.round((dn / tot) * 100) : 0;
+      return `<div class="projrow"><span class="name">${esc(p.name)}</span><span class="pct">${pc}%</span><div class="bar"><span style="width:${pc}%;background:var(--${p.color})"></span></div></div>`;
+    }).join('');
+    $('projrows').innerHTML = rows || '<p class="hint">No tasks this week yet. Add one with “New task”.</p>';
+
+    const late = ts.filter(isLate).length;
+    const high = ts.filter((t) => t.priority === 'high' && t.stage !== 'done').length;
+    const review = ts.filter((t) => t.stage === 'review').length;
+    const carried = ts.filter((t) => t.carried && t.stage !== 'done').length;
+    const unowned = ts.filter((t) => !t.owner && t.stage !== 'done' && t.stage !== 'backlog').length;
+    $('flags').innerHTML = [
+      ['Past due day', late, late ? 'alert' : ''],
+      ['High priority open', high, high ? 'warn' : ''],
+      ['Waiting for review', review, ''],
+      ['Carried over', carried, carried ? 'warn' : ''],
+      ['Active with no owner', unowned, unowned ? 'warn' : '']
+    ].map(([l, n, c]) => `<div class="flag ${c}"><span>${l}</span><b>${n}</b></div>`).join('');
+  }
+
+  function renderChips() {
+    const all = `<button class="chip" data-proj="" aria-pressed="${!filterProject}">All projects</button>`;
+    const ps = state.projects.map((p) =>
+      `<button class="chip" data-proj="${esc(p.id)}" aria-pressed="${filterProject === p.id}" style="--c:var(--${p.color})" title="Click to filter, double-click to edit"><span class="dot"></span>${esc(p.name)}</button>`).join('');
+    $('chips').innerHTML = all + ps + `<button class="chip add" id="addproj">+ Project</button>` +
+      (filterProject ? `<button class="chip add" id="editproj">Edit “${esc(project(filterProject)?.name)}”</button>` : '');
+  }
+
+  function cardHTML(t) {
+    const p = project(t.projectId) || { name: 'No project', color: 'muted' };
+    const si = STAGES.findIndex((s) => s.id === t.stage);
+    const ti = todayIdx();
+    const dueCls = isLate(t) ? 'late' : (t.day != null && t.day === ti && t.stage !== 'done' ? 'now' : '');
+    const due = t.day != null ? `<span class="due ${dueCls}">${dueCls === 'late' ? 'Late · ' : dueCls === 'now' ? 'Today · ' : ''}${DAYS[t.day]}</span>` : '<span>No day</span>';
+    const movers = view === 'board'
+      ? `<span class="movers"><button data-move="-1" ${si === 0 ? 'disabled' : ''} aria-label="Move to ${si > 0 ? STAGES[si - 1].name : ''}">‹</button><button data-move="1" ${si === STAGES.length - 1 ? 'disabled' : ''} aria-label="Move to ${si < STAGES.length - 1 ? STAGES[si + 1].name : ''}">›</button></span>`
+      : `<span>${STAGES[si]?.name || ''}</span>`;
+    return `<article class="card ${t.stage === 'done' ? 'done' : ''}" draggable="true" data-id="${t.id}" tabindex="0" aria-label="${esc(t.title)}">
+      <div class="top"><span class="proj" style="--c:var(--${p.color})">${esc(p.name)}</span><span class="prio ${t.priority}">${PRIO[t.priority] || ''}</span></div>
+      <div class="title">${esc(t.title)}</div>
+      <div class="meta">${due}<span>${pts(t)} pt${pts(t) === 1 ? '' : 's'}</span>${t.carried ? `<span class="carried">↻ ${t.carried}w</span>` : ''}${movers}<span class="avatar" title="${esc(t.owner || 'Unassigned')}">${esc(initials(t.owner))}</span></div>
+    </article>`;
+  }
+
+  function renderBoard() {
+    const ts = visibleTasks();
+    const rank = { high: 0, med: 1, low: 2 };
+    const sort = (a, b) => (rank[a.priority] - rank[b.priority]) || ((a.day ?? 9) - (b.day ?? 9));
+    let cols;
+    if (view === 'board') {
+      cols = STAGES.map((s) => ({ key: s.id, name: s.name, sw: `var(--s-${s.id})`, tasks: ts.filter((t) => t.stage === s.id).sort(sort) }));
+    } else {
+      const ti = todayIdx();
+      cols = DAYS.map((d, i) => ({ key: String(i), name: `${d} ${addDays(viewMonday, i).getDate()}`, today: i === ti, tasks: ts.filter((t) => t.day === i).sort(sort) }));
+      cols.push({ key: 'none', name: 'Unscheduled', tasks: ts.filter((t) => t.day == null).sort(sort) });
+    }
+    const board = $('board');
+    board.style.setProperty('--cols', cols.length);
+    board.innerHTML = cols.map((c) => `
+      <section class="col ${c.today ? 'today' : ''}" data-col="${c.key}" aria-label="${esc(c.name)}">
+        <div class="col-head">${c.sw ? `<span class="sw" style="--sc:${c.sw}"></span>` : ''}<h3>${esc(c.name)}</h3>${c.today ? '<span class="tag">Today</span>' : ''}<span class="n">${c.tasks.length}</span></div>
+        ${c.tasks.map(cardHTML).join('') || '<div class="empty-col">Drop tasks here</div>'}
+        <button class="col-add" data-addcol="${c.key}">+ Add task</button>
+      </section>`).join('');
+  }
+
+  function renderReview() {
+    const r = state.reviews[curKey()] || {};
+    for (const k of ['wins', 'blockers', 'focus']) {
+      const el = $('r-' + k);
+      if (document.activeElement !== el) el.value = r[k] || '';
+    }
+  }
+
+  // ---- Mutations ----
+  function moveTask(id, colKey) {
+    const t = state.tasks.find((x) => x.id === id);
+    if (!t) return;
+    if (view === 'board') { if (t.stage === colKey) return; t.stage = colKey; }
+    else { const d = colKey === 'none' ? null : Number(colKey); if (t.day === d) return; t.day = d; }
+    save(); render();
+    toast(view === 'board' ? `Moved to ${STAGES.find((s) => s.id === colKey).name}` : `Scheduled for ${colKey === 'none' ? 'no day' : DAYS[Number(colKey)]}`);
+  }
+
+  // ---- Task dialog ----
+  function openTask(id, preset = {}) {
+    editingId = id || null;
+    const t = id ? state.tasks.find((x) => x.id === id) : null;
+    if (!state.projects.length) { openProject(null); toast('Create a project first'); return; }
+    $('taskdlg-title').textContent = t ? 'Edit task' : 'New task';
+    $('t-project').innerHTML = state.projects.map((p) => `<option value="${esc(p.id)}">${esc(p.name)}</option>`).join('');
+    $('t-stage').innerHTML = STAGES.map((s) => `<option value="${s.id}">${s.name}</option>`).join('');
+    $('t-day').innerHTML = '<option value="">No day</option>' + DAYS.map((d, i) => `<option value="${i}">${d} ${fmt(addDays(viewMonday, i), { day: 'numeric', month: 'short' })}</option>`).join('');
+    $('t-title').value = t?.title || '';
+    $('t-project').value = t?.projectId || preset.projectId || filterProject || state.projects[0].id;
+    $('t-stage').value = t?.stage || preset.stage || 'todo';
+    $('t-prio').value = t?.priority || 'med';
+    const d = t ? t.day : preset.day !== undefined ? preset.day : todayIdx();
+    $('t-day').value = d == null ? '' : String(d);
+    $('t-owner').value = t?.owner || '';
+    $('t-points').value = t ? pts(t) : 1;
+    $('t-notes').value = t?.notes || '';
+    $('t-delete').hidden = !t;
+    $('t-confirm').hidden = true;
+    $('taskdlg').showModal();
+    $('t-title').focus();
+  }
+  $('taskform').addEventListener('submit', (e) => {
+    e.preventDefault();
+    const title = $('t-title').value.trim();
+    if (!title) { $('t-title').focus(); return; }
+    const data = {
+      title, projectId: $('t-project').value, stage: $('t-stage').value, priority: $('t-prio').value,
+      day: $('t-day').value === '' ? null : Number($('t-day').value),
+      owner: $('t-owner').value.trim(), points: Math.max(0, Math.min(40, Number($('t-points').value) || 0)),
+      notes: $('t-notes').value.trim()
+    };
+    if (editingId) Object.assign(state.tasks.find((x) => x.id === editingId), data);
+    else state.tasks.push({ id: uid(), week: curKey(), ...data });
+    save(); render(); $('taskdlg').close();
+    toast(editingId ? 'Task updated' : 'Task added');
+  });
+  $('t-cancel').onclick = () => $('taskdlg').close();
+  $('t-delete').onclick = () => { $('t-confirm').hidden = false; $('t-del-yes').focus(); };
+  $('t-del-no').onclick = () => { $('t-confirm').hidden = true; };
+  $('t-del-yes').onclick = () => {
+    state.tasks = state.tasks.filter((x) => x.id !== editingId);
+    save(); render(); $('taskdlg').close(); toast('Task deleted');
+  };
+
+  // ---- Project dialog ----
+  function openProject(id) {
+    editingProjectId = id;
+    const p = id ? project(id) : null;
+    $('projdlg-title').textContent = p ? 'Edit project' : 'New project';
+    $('p-name').value = p?.name || '';
+    const used = state.projects.map((x) => x.color);
+    const pick = p?.color || COLORS.find((c) => !used.includes(c)) || COLORS[state.projects.length % COLORS.length];
+    $('p-colors').innerHTML = COLORS.map((c) => `<label><input type="radio" name="pcolor" value="${c}" ${c === pick ? 'checked' : ''} aria-label="Colour ${c.slice(1)}"><span style="--c:var(--${c})"></span></label>`).join('');
+    $('p-delete').hidden = !p;
+    $('p-confirm').hidden = true;
+    $('projdlg').showModal();
+    $('p-name').focus();
+  }
+  $('projform').addEventListener('submit', (e) => {
+    e.preventDefault();
+    const name = $('p-name').value.trim();
+    if (!name) return;
+    const color = document.querySelector('input[name="pcolor"]:checked')?.value || 'p1';
+    if (editingProjectId) Object.assign(project(editingProjectId), { name, color });
+    else state.projects.push({ id: uid(), name, color });
+    save(); render(); $('projdlg').close();
+    toast(editingProjectId ? 'Project updated' : 'Project added');
+  });
+  $('p-cancel').onclick = () => $('projdlg').close();
+  $('p-delete').onclick = () => {
+    const n = state.tasks.filter((t) => t.projectId === editingProjectId).length;
+    $('p-confirm-text').textContent = n ? `Delete this project and its ${n} task${n === 1 ? '' : 's'} across all weeks?` : 'Delete this project?';
+    $('p-confirm').hidden = false; $('p-del-yes').focus();
+  };
+  $('p-del-no').onclick = () => { $('p-confirm').hidden = true; };
+  $('p-del-yes').onclick = () => {
+    state.projects = state.projects.filter((p) => p.id !== editingProjectId);
+    state.tasks = state.tasks.filter((t) => t.projectId !== editingProjectId);
+    if (filterProject === editingProjectId) filterProject = null;
+    save(); render(); $('projdlg').close(); toast('Project deleted');
+  };
+
+  // ---- Data dialog ----
+  $('exportbtn').onclick = () => { $('d-json').value = JSON.stringify(state, null, 2); $('d-msg').textContent = ''; $('datadlg').showModal(); };
+  $('d-close').onclick = () => $('datadlg').close();
+  $('d-copy').onclick = () => {
+    const ta = $('d-json');
+    navigator.clipboard?.writeText(ta.value).then(() => { $('d-msg').textContent = 'Copied to clipboard.'; }, () => { ta.select(); $('d-msg').textContent = 'Copy was blocked. The text is selected, so press Ctrl/Cmd+C.'; })
+      ?? (ta.select(), $('d-msg').textContent = 'Text selected. Press Ctrl/Cmd+C to copy.');
+  };
+  $('d-file').onchange = (e) => {
+    const f = e.target.files[0];
+    if (!f) return;
+    const r = new FileReader();
+    r.onload = () => { $('d-json').value = r.result; $('d-msg').textContent = `Loaded ${f.name}. Press Restore to apply it.`; };
+    r.readAsText(f);
+    e.target.value = '';
+  };
+  $('d-restore').onclick = () => {
+    try {
+      const s = JSON.parse($('d-json').value);
+      if (!valid(s)) throw new Error();
+      state = s; filterProject = null; save(); render(); $('datadlg').close(); toast('Data restored');
+    } catch { $('d-msg').textContent = 'That isn’t a valid tracker backup. It needs "projects", "tasks" and "reviews".'; }
+  };
+
+  // ---- Events ----
+  $('prev').onclick = () => { viewMonday = addDays(viewMonday, -7); render(); };
+  $('next').onclick = () => { viewMonday = addDays(viewMonday, 7); render(); };
+  $('thisweek').onclick = () => { viewMonday = mondayOf(new Date()); render(); };
+  $('v-board').onclick = () => { view = 'board'; render(); };
+  $('v-week').onclick = () => { view = 'week'; render(); };
+  $('newtask').onclick = () => openTask(null);
+  $('search').addEventListener('input', (e) => { query = e.target.value; renderBoard(); });
+  $('clearex').onclick = () => { state = { projects: [], tasks: [], reviews: {} }; filterProject = null; save(); render(); toast('Examples cleared. Add your first project.'); };
+
+  $('chips').addEventListener('click', (e) => {
+    const c = e.target.closest('button');
+    if (!c) return;
+    if (c.id === 'addproj') return openProject(null);
+    if (c.id === 'editproj') return openProject(filterProject);
+    filterProject = c.dataset.proj || null;
+    render();
+  });
+  $('chips').addEventListener('dblclick', (e) => { const c = e.target.closest('[data-proj]'); if (c?.dataset.proj) openProject(c.dataset.proj); });
+
+  const board = $('board');
+  board.addEventListener('click', (e) => {
+    const mv = e.target.closest('[data-move]');
+    if (mv) {
+      const id = mv.closest('.card').dataset.id;
+      const t = state.tasks.find((x) => x.id === id);
+      const i = STAGES.findIndex((s) => s.id === t.stage) + Number(mv.dataset.move);
+      if (STAGES[i]) moveTask(id, STAGES[i].id);
+      return;
+    }
+    const add = e.target.closest('[data-addcol]');
+    if (add) {
+      const k = add.dataset.addcol;
+      return openTask(null, view === 'board' ? { stage: k } : { day: k === 'none' ? null : Number(k) });
+    }
+    const card = e.target.closest('.card');
+    if (card) openTask(card.dataset.id);
+  });
+  board.addEventListener('keydown', (e) => {
+    const card = e.target.closest('.card');
+    if (card && e.target === card && (e.key === 'Enter' || e.key === ' ')) { e.preventDefault(); openTask(card.dataset.id); }
+  });
+  let dragId = null;
+  board.addEventListener('dragstart', (e) => {
+    const card = e.target.closest('.card');
+    if (!card) return;
+    dragId = card.dataset.id;
+    card.classList.add('dragging');
+    e.dataTransfer.effectAllowed = 'move';
+    try { e.dataTransfer.setData('text/plain', dragId); } catch {}
+  });
+  board.addEventListener('dragend', (e) => { e.target.closest?.('.card')?.classList.remove('dragging'); board.querySelectorAll('.over').forEach((c) => c.classList.remove('over')); });
+  board.addEventListener('dragover', (e) => {
+    const col = e.target.closest('.col');
+    if (!col || !dragId) return;
+    e.preventDefault();
+    board.querySelectorAll('.over').forEach((c) => c !== col && c.classList.remove('over'));
+    col.classList.add('over');
+  });
+  board.addEventListener('drop', (e) => {
+    const col = e.target.closest('.col');
+    if (!col || !dragId) return;
+    e.preventDefault();
+    const id = dragId; dragId = null;
+    moveTask(id, col.dataset.col);
+  });
+
+  let savedTimer;
+  for (const k of ['wins', 'blockers', 'focus']) {
+    $('r-' + k).addEventListener('input', (e) => {
+      const key = curKey();
+      state.reviews[key] = { ...(state.reviews[key] || {}), [k]: e.target.value };
+      save();
+      $('saved').classList.add('on');
+      clearTimeout(savedTimer);
+      savedTimer = setTimeout(() => $('saved').classList.remove('on'), 1200);
+    });
+  }
+
+  $('rollover').onclick = () => {
+    const nextKey = weekKey(addDays(viewMonday, 7));
+    const open = weekTasks().filter((t) => t.stage !== 'done');
+    if (!open.length) return toast('Nothing to roll over. Every task is done.');
+    open.forEach((t) => { t.week = nextKey; t.carried = (t.carried || 0) + 1; });
+    save();
+    viewMonday = addDays(viewMonday, 7);
+    render();
+    toast(`Moved ${open.length} unfinished task${open.length === 1 ? '' : 's'} into ${nextKey.replace(/^\d+-/, '')}`);
+  };
+
+  document.addEventListener('keydown', (e) => {
+    if (document.querySelector('dialog[open]') || /INPUT|TEXTAREA|SELECT/.test(document.activeElement?.tagName)) return;
+    if (e.key === 'n') { e.preventDefault(); openTask(null); }
+    else if (e.key === 'ArrowLeft' && e.altKey) $('prev').click();
+    else if (e.key === 'ArrowRight' && e.altKey) $('next').click();
+  });
+
+  let toastTimer;
+  function toast(msg) {
+    const el = $('toast');
+    el.textContent = msg; el.classList.add('on');
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(() => el.classList.remove('on'), 2200);
+  }
+
+  render();
+})();
+</script>
+</body>
+</html>
